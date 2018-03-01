@@ -76,7 +76,7 @@ object XGBoost {
             val watches = List("train" -> trainMat).toMap
             val metrics = Array.tabulate(watches.size)(_ => Array.ofDim[Float](round))
             val booster = XGBoostScala.train(trainMat, paramMap, round,
-              watches,metrics ,obj, eval)
+              watches, metrics, obj, eval)
             c.collect(new XGBoostModel(booster))
           } finally {
             Rabit.shutdown()
