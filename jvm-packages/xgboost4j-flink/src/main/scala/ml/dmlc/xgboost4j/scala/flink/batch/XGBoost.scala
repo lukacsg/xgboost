@@ -36,7 +36,8 @@ object XGBoost {
     * on the training data [[LabeledPoint]].
     *
     * @param paramMap         the parameters of the train
-    * @param round            the number of training round. The round defines the tree number in the model.
+    * @param round            the number of training round. The round defines the
+    *                         tree number in the model.
     * @param workerParameters this are the initial parameters of the [[Rabit]] workers
     *                         which are responsible for the information sharing
     *                         through the threads of other model training.
@@ -141,7 +142,7 @@ object XGBoost {
     * @param numberOfParallelism the parallelism of the training
     * @param filePath            the path of the model to save
     * @param trackerConf         contains the necessary configuration to create the Tracker
-    * @param saveAsHadoopFile    the file path uses hadoop filesystem or not. Default is hadoop file.
+    * @param saveAsHadoopFile    the file path uses hadoop filesystem or not, true by default
     * @param obj                 the user-defined objective function, null by default
     * @param eval                the user-defined evaluation function, null by default
     */
