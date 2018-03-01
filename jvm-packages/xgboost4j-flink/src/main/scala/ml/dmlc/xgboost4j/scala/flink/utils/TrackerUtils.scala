@@ -27,10 +27,12 @@ import ml.dmlc.xgboost4j.scala.rabit.{RabitTracker => ScalaRabitTracker}
   *                                Use a finite, non-zero timeout value to prevent tracker from
   *                                hanging indefinitely (in milliseconds)
   *                                (supported by "scala" implementation only.)
-  * @param trackerImpl             Choice between "python" or "scala". The former utilizes the Java wrapper of
-  *                                the Python Rabit tracker (in dmlc_core), whereas the latter is implemented
-  *                                in Scala without Python components, and with full support of timeouts.
-  *                                The Scala implementation is currently experimental, use at your own risk.
+  * @param trackerImpl             Choice between "python" or "scala". The former utilizes the
+  *                                Java wrapper of the Python Rabit tracker (in dmlc_core), whereas
+  *                                the latter is implemented in Scala without Python components,
+  *                                and with full support of timeouts.
+  *                                The Scala implementation is currently experimental,
+  *                                use at your own risk.
   */
 case class TrackerConf(workerConnectionTimeout: Long, trackerImpl: String)
 
