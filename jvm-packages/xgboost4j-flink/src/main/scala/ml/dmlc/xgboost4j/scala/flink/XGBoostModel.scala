@@ -18,50 +18,167 @@ package ml.dmlc.xgboost4j.scala.flink
 
 import ml.dmlc.xgboost4j.LabeledPoint
 import ml.dmlc.xgboost4j.scala.{Booster, DMatrix}
-
+import org.apache.commons.logging.{Log, LogFactory}
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala.{DataSet, _}
-import org.apache.flink.ml.math.Vector
+import org.apache.flink.ml.math.{DenseVector, SparseVector, Vector}
+import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
-class XGBoostModel (booster: Booster) extends Serializable {
+class XGBoostModel(booster: Booster) extends Serializable {
+  val logger: Log = LogFactory.getLog(this.getClass)
+
   /**
-    * Save the model as a Hadoop filesystem file.
+    * Save the model as a Hadoop filesystem file or as local filesystem file.
     *
-    * @param modelPath The model path as in Hadoop path.
+    * @param modelPath    The model path as in Hadoop path.
+    * @param asHadoopFile Is the file path Hadoop filesystem file or not.
+    *                     Default th file path will be dealt as a Hadoop filesystem file.
     */
-  def saveModelAsHadoopFile(modelPath: String): Unit = {
-    booster.saveModel(FileSystem
-      .get(new Configuration)
-      .create(new Path(modelPath)))
+  def saveModel(modelPath: String, asHadoopFile: Boolean = true): Unit = {
+    if (asHadoopFile) {
+      booster.saveModel(FileSystem
+        .get(new Configuration)
+        .create(new Path(modelPath)))
+    }
+    else {
+      booster.saveModel(modelPath)
+    }
   }
 
   /**
-   * predict with the given DMatrix
-   * @param testSet the local test set represented as DMatrix
-   * @return prediction result
-   */
+    * Predict with the given [[DMatrix]].
+    *
+    * @param testSet the local test set represented as DMatrix
+    * @return prediction result
+    */
   def predict(testSet: DMatrix): Array[Array[Float]] = {
-    booster.predict(testSet, true, 0)
+    booster.predict(testSet, outPutMargin = true)
   }
 
   /**
-    * Predict given vector dataset.
+    * Batch predict.
+    * Predict with the given [[DataSet]] of [[Vector]] .
     *
-    * @param data The dataset to be predicted.
-    * @return The prediction result.
+    * @param data the [[DataSet]] of [[Vector]] to be predicted
+    * @return the prediction result
     */
-  def predict(data: DataSet[Vector]) : DataSet[Array[Float]] = {
+  def predict(data: DataSet[Vector], numberOfParallelism: Int): DataSet[Array[Float]] = {
+    val input =
+      if (data.getParallelism != numberOfParallelism) {
+        logger.info(s"repartitioning training set to $numberOfParallelism partitions")
+        data.rebalance.map(x => x).setParallelism(numberOfParallelism)
+      } else {
+        data
+      }
     val predictMap: Iterator[Vector] => Traversable[Array[Float]] =
       (it: Iterator[Vector]) => {
-        val mapper = (x: Vector) => {
-          val (index, value) = x.toSeq.unzip
-          LabeledPoint(0.0f, index.toArray, value.map(_.toFloat).toArray)
+        if (it.isEmpty) {
+          Some(Array.empty[Float])
+        } else {
+          val mapper = (x: Vector) => {
+
+            var index: Array[Int] = Array[Int]()
+            var value: Array[Double] = Array[Double]()
+            x match {
+              case s: SparseVector =>
+                index = s.indices
+                value = s.data
+              case d: DenseVector =>
+                val (i, v) = d.toSeq.unzip
+                index = i.toArray
+                value = v.toArray
+            }
+            LabeledPoint(0.0f,
+              index, value.map(z => z.toFloat))
+          }
+          val dataIter = for (x <- it) yield mapper(x)
+          val dMatrix = new DMatrix(dataIter, null)
+          this.booster.predict(dMatrix)
         }
-        val dataIter = for (x <- it) yield mapper(x)
-        val dmat = new DMatrix(dataIter, null)
-        this.booster.predict(dmat)
       }
-    data.mapPartition(predictMap)
+    input.mapPartition(predictMap)
   }
+
+  /**
+    * Get the background [[Booster]] object of this model.
+    *
+    * @return the [[Booster]]
+    */
+  def getBooster: Booster = this.booster
+
+  /**
+    * Streaming predict.
+    * Predict with the given [[DataStream]] of [[DMatrix]]
+    *
+    * @param testData            The [[DataStream]] of [[DMatrix]] to be predicted.
+    * @param numberOfParallelism the number of parallelism of the prediction
+    * @return the prediction result [[DataStream]] of Array[Array[Float]\]
+    */
+  def predict(testData: DataStream[DMatrix],
+              numberOfParallelism: Int
+             ): DataStream[Array[Array[Float]]] = {
+    val input = if (testData.parallelism != numberOfParallelism) {
+      testData.rebalance.map(x => x).setParallelism(numberOfParallelism)
+    } else {
+      testData
+    }
+    input.map(this.booster.predict(_)).setParallelism(numberOfParallelism)
+  }
+
+  /**
+    * Streaming predict with key.
+    * Predict with the given [[DataStream]] of ([[DMatrix]], Array[K]).
+    * The [[DataStream]] contains the test data and a K type key for the data too
+    * in order to make the identification of the prediction result easier.
+    *
+    * @param testData            the [[DataStream]] of ([[DMatrix]], Array[K]) to be predicted
+    * @param numberOfParallelism the number of parallelism of the prediction
+    * @tparam K the type of the key
+    * @return the prediction result [[DataStream]] of Array[(Array[Float], K)] with the key
+    */
+  def predictWithId[K](testData: DataStream[(DMatrix, Array[K])],
+                       numberOfParallelism: Int
+                      ): DataStream[Array[(Array[Float], K)]] = {
+    implicit val typeInfo = TypeInformation.of(classOf[(DMatrix, Array[K])])
+    implicit val typeInfo2 = TypeInformation.of(classOf[Array[(Array[Float], K)]])
+    val input = if (testData.parallelism != numberOfParallelism) {
+      testData.rebalance.map(x => x).setParallelism(numberOfParallelism)
+    } else {
+      testData
+    }
+    input.map(x => {
+      this.booster.predict(x._1).zip(x._2)
+    }).setParallelism(numberOfParallelism)
+  }
+
 }
+
+/**
+  * Helper function to load model.
+  */
+object XGBoostModel {
+
+  import ml.dmlc.xgboost4j.scala.{XGBoost => XGBoostScala}
+
+  /**
+    * Load XGBoost model from path. it is prepared to both local/ and Hadoop filesystem.
+    *
+    * @param modelPath      The path of the model
+    * @param fromHadoopFile if it is true the model path will be deal as Hadoop file.
+    *                       By default it use hadoop filesystem API.
+    * @return The loaded model
+    */
+  def loadModelFromFile(modelPath: String, fromHadoopFile: Boolean = true): XGBoostModel =
+    new XGBoostModel(
+      if (fromHadoopFile) {
+        XGBoostScala.loadModel(FileSystem
+          .get(new Configuration)
+          .open(new Path(modelPath)))
+      } else {
+        XGBoostScala.loadModel(modelPath)
+      })
+
+}
+
