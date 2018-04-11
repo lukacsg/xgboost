@@ -1,12 +1,8 @@
 <img src=https://raw.githubusercontent.com/dmlc/dmlc.github.io/master/img/logo-m/xgboost.png width=135/>  eXtreme Gradient Boosting
 ===========
-[![Build Status](https://travis-ci.org/dmlc/xgboost.svg?branch=master)](https://travis-ci.org/dmlc/xgboost)
-[![Build Status](https://ci.appveyor.com/api/projects/status/5ypa8vaed6kpmli8?svg=true)](https://ci.appveyor.com/project/tqchen/xgboost)
+[![Build Status](https://travis-ci.org/streamline-eu/xgboost.svg?branch=master)](https://travis-ci.org/streamline-eu/xgboost)
 [![Documentation Status](https://readthedocs.org/projects/xgboost/badge/?version=latest)](https://xgboost.readthedocs.org)
 [![GitHub license](http://dmlc.github.io/img/apache2.svg)](./LICENSE)
-[![CRAN Status Badge](http://www.r-pkg.org/badges/version/xgboost)](http://cran.r-project.org/web/packages/xgboost)
-[![PyPI version](https://badge.fury.io/py/xgboost.svg)](https://pypi.python.org/pypi/xgboost/)
-[![Gitter chat for developers at https://gitter.im/dmlc/xgboost](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dmlc/xgboost?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [Documentation](https://xgboost.readthedocs.org) |
 [Resources](demo/README.md) |
@@ -29,8 +25,7 @@ What's New
 
 Ask a Question
 --------------
-* For reporting bugs please use the [xgboost/issues](https://github.com/dmlc/xgboost/issues) page.
-* For generic questions or to share your experience using XGBoost please use the [XGBoost User Group](https://groups.google.com/forum/#!forum/xgboost-user/)
+* For reporting bugs please use the [xgboost/issues](https://github.com/streamline-eu/xgboost/issues) page.
 
 Help to Make XGBoost Better
 ---------------------------
