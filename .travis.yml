@@ -90,8 +90,9 @@ deploy:
   provider: script
   script: "cp .travis.settings.xml $HOME/.m2/settings.xml && cd jvm-packages && mvn deploy"
   skip_cleanup: true
+
   on:
-    tags: true
+    condition: $TASK = java_test
 
 notifications:
   email:

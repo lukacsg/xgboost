@@ -4,8 +4,9 @@
                       http://maven.apache.org/xsd/settings-1.0.0.xsd">
     <servers>
         <server>
-            <id>github</id>
-            <password>${env.GITHUB_OAUTH}</password>
+            <id>bintray-streamline-streamline</id>
+            <username>tlindener</username>
+            <password>${env.BINTRAY_TOKEN}</password>
         </server>
     </servers>
 </settings>
