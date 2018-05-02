@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.comrepositoryNamepiler.target>1.8</maven.comrepositoryNamepiler.target>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <flink.version>1.4.0</flink.version>
         <spark.version>2.3.0</spark.version>
         <scala.version>2.11.8</scala.version>
