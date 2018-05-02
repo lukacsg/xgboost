@@ -29,7 +29,7 @@
         <repository>
             <id>bintray-streamline-streamline</id>
             <name>streamline-streamline</name>
-            <url>https://api.bintray.com/maven/streamline/streamline/xgboost/;publish=1</url>
+            <url>https://api.bintray.com/maven/streamline/maven-snapshots/xgboost-jvm/;publish=1</url>
         </repository>
     </distributionManagement>
     <modules>
