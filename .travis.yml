@@ -92,7 +92,7 @@ deploy:
   skip_cleanup: true
 
   on:
-    condition: $TASK = java_test
+    condition: $TASK = java_test && $TRAVIS_OS_NAME != osx
 
 notifications:
   email:
